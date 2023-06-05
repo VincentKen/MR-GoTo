@@ -2,6 +2,7 @@
 
 ## Installation
 Place the contents of this repo inside $MR_DIR/ws02/src/mr_goto
+`git clone git@github.com:VincentKen/MR-GoTo.git mr_goto`
 
 ## Build
 Build using `colcon build`
