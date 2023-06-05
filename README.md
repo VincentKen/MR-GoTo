@@ -1,3 +1,10 @@
 # Mobile Robotics Assignment GoTo
 
-place inside $MR_DIR alongside ws00, ws01, and ws02
+## Installation
+Place inside $MR_DIR/ws02/src
+
+## Build
+Build using `colcon build`
+
+## Run
+Run using `ros2 run mr_goto mr_goto`
