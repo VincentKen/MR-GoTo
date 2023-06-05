@@ -28,20 +28,19 @@ geometry_msgs::msg::Twist GoTo::goto_goal_straight(tuw::Pose2D pose_robot, tuw::
         twist_msg.angular.z = 2 * orientation_error;
         twist_msg.linear.x = 0.0;
     }
-    // When facing goal -> drive forward
+    // Facing goal
     else{
+        // If not at goal position drive forward
         if(dist_to_goal > 0.01){
             twist_msg.linear.x = min(0.8, 0.1 + dist_to_goal);
             twist_msg.angular.z = 0.0;
         }
+        // At goal position. Rotate to correct goal orientation
         else{
             double final_orientation_error = angle_difference(pose_goal.theta(), pose_robot.theta());
             twist_msg.angular.z = 2 * final_orientation_error;
             twist_msg.linear.x = 0.0;
         }
     }
-    
-    
     return twist_msg;
-
 }
