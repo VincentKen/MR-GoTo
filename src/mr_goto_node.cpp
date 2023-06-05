@@ -6,6 +6,11 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
         10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "subscribed to ground_truth");
 
+    sub_goal_pose_ = create_subscription<geometry_msgs::msg::PoseStamped>(
+        "goal_pose",
+        10, std::bind(&GoToNode::callback_goal_pose, this, std::placeholders::_1));
+    RCLCPP_INFO(this->get_logger(), "subscribed to goal_pose");
+
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(5000),
         std::bind(&GoToNode::timer_callback, this)
@@ -19,5 +24,14 @@ void GoToNode::timer_callback() {
 void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     this->ground_truth_ = msg;
-    RCLCPP_INFO(this->get_logger(), std::to_string(msg->pose.pose.position.x).data());
+    //RCLCPP_INFO(this->get_logger(), std::to_string(msg->pose.pose.position.x).data());
+}
+
+void GoToNode::callback_goal_pose(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+{
+    double yaw;
+    tuw::QuaternionToYaw(msg->pose.orientation, yaw);
+    pose_goal_ = tuw::Pose2D(msg->pose.position.x, msg->pose.position.y, yaw);
+    
+    RCLCPP_INFO(this->get_logger(), ("Goal position: x=" + std::to_string(pose_goal_.get_x()) + " y=" + std::to_string(pose_goal_.get_y())).c_str());
 }
