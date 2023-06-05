@@ -17,8 +17,8 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(OpenCV REQUIRED)
-#find_package(tuw_geometry REQUIRED)
-#find_package(tuw_geometry_msgs REQUIRED)
+find_package(tuw_geometry REQUIRED)
+find_package(tuw_geometry_msgs REQUIRED)
 find_package(message_filters REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
@@ -38,8 +38,8 @@ ament_target_dependencies(mr_goto
     tf2
     tf2_geometry_msgs
     tf2_ros
-    #tuw_geometry
-    #tuw_geometry_msgs
+    tuw_geometry
+    tuw_geometry_msgs
     message_filters
     OpenCV)
 
