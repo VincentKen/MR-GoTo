@@ -25,6 +25,7 @@ private:
 
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_goal_pose_;
     tuw::Pose2D pose_goal_;
+    bool goal_set;  // stores if a goal was already set by the user
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;          /// velocity command pulisher
 

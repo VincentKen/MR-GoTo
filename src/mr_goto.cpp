@@ -10,19 +10,36 @@ GoTo::GoTo()
 }
 
 
-geometry_msgs::msg::Twist GoTo::goto_goal_linear(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal)
+geometry_msgs::msg::Twist GoTo::goto_goal_straight(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal)
 {
-    double orientation_error = angle_difference(pose_goal.theta(), pose_robot.theta());
     auto twist_msg = geometry_msgs::msg::Twist();
 
-    if(orientation_error > 0.1){
-        twist_msg.angular.z = orientation_error;
-    }
-    else{
-        twist_msg.angular.z = 0.0;
-    }
+    // Calculate orientation to face to goal
+    double orientation_to_goal = Point2D(pose_goal.position() - pose_robot.position()).angle();
+    double orientation_error = angle_difference(orientation_to_goal, pose_robot.theta());
 
-    twist_msg.linear.x = 0.0;
+    // Calculate distance to goal
+    double dist_to_goal = pose_robot.position().distanceTo(pose_goal.position());
+    
+
+    // First turn to face to goal 
+    // If we are very close to goal orientation_error is not numerically stable -> exclude this case
+    if(abs(orientation_error) > 0.01 && dist_to_goal > 0.01){
+        twist_msg.angular.z = 2 * orientation_error;
+        twist_msg.linear.x = 0.0;
+    }
+    // When facing goal -> drive forward
+    else{
+        if(dist_to_goal > 0.01){
+            twist_msg.linear.x = min(0.8, 0.1 + dist_to_goal);
+            twist_msg.angular.z = 0.0;
+        }
+        else{
+            double final_orientation_error = angle_difference(pose_goal.theta(), pose_robot.theta());
+            twist_msg.angular.z = 2 * final_orientation_error;
+            twist_msg.linear.x = 0.0;
+        }
+    }
     
     
     return twist_msg;

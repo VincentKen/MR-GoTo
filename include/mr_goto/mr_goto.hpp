@@ -12,7 +12,7 @@ namespace mr
     {
     public:
         GoTo();
-        geometry_msgs::msg::Twist goto_goal_linear(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal);
+        geometry_msgs::msg::Twist goto_goal_straight(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal);
 
     private:
     };
