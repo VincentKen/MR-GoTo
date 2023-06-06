@@ -7,20 +7,44 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(tuw_geometry REQUIRED)
+find_package(tuw_geometry_msgs REQUIRED)
+find_package(message_filters REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(mr_goto src/mr_goto.cpp src/mr_goto_node.cpp)
+add_executable(mr_goto src/standalone_mr_goto.cpp src/mr_goto.cpp src/mr_goto_node.cpp)
 target_include_directories(mr_goto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(mr_goto PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 ament_target_dependencies(mr_goto
-  rclcpp
-  rclcpp_components)
+    rclcpp
+    rclcpp_components
+    sensor_msgs
+    std_msgs
+    nav_msgs
+    nav2_msgs
+    tf2
+    tf2_geometry_msgs
+    tf2_ros
+    tuw_geometry
+    tuw_geometry_msgs
+    message_filters
+    OpenCV)
+
 
 install(TARGETS mr_goto
   DESTINATION lib/${PROJECT_NAME})
