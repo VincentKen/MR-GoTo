@@ -49,6 +49,7 @@ private:
   rclcpp::Subscription<LineSegmentsMsg>::SharedPtr sub_line_segments_;        /// line subscriber
   rclcpp::Subscription<LaserScanMsg>::SharedPtr sub_laser_;                   /// laser subscriber
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pose_estimate_pub_;   /// pose_estimate publisher
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_init_pose_;  /// initial pose subscriber
 
   typedef message_filters::sync_policies::ExactTime<LineSegmentsMsg, LaserScanMsg> exact_policy;
   std::shared_ptr<message_filters::Subscriber<LineSegmentsMsg>> sub_sync_line_segments_;
@@ -71,6 +72,9 @@ private:
 
   /// function called by an internal callback x time per second
   void on_timer();
+
+  //calback for init pose
+  void callback_init_pose(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
   std::shared_ptr<mr::EKF> filter_;         /// pointer to the actual particle filter
   std::shared_ptr<EKFNodeParameter> param_; /// pointer to the parameters used by the particle filter

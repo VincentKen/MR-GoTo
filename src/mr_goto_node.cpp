@@ -9,9 +9,9 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     goal_set = false;
     
     sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
-        "ground_truth",
+        "pose_estimate",
         10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
-    RCLCPP_INFO(this->get_logger(), "subscribed to ground_truth");
+    RCLCPP_INFO(this->get_logger(), "subscribed to pose_estimate");
 
     sub_goal_pose_ = create_subscription<geometry_msgs::msg::PoseStamped>(
         "goal_pose",
