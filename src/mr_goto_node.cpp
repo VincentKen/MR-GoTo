@@ -47,12 +47,12 @@ void GoToNode::map_timer_callback() {
     auto msg = std::make_shared<nav_msgs::msg::OccupancyGrid>();
     // Fill out the header
     msg->header.stamp = this->now();
-    msg->header.frame_id = "map";  // Adjust as needed
+    msg->header.frame_id = "map";
     // Set the map resolution (meters per pixel)
-    msg->info.resolution = 0.05;  // Adjust as needed
+    msg->info.resolution = 0.05;
     // Set the map origin
-    msg->info.origin.position.x = 0.0;  // Adjust as needed
-    msg->info.origin.position.y = 0.0;  // Adjust as needed
+    msg->info.origin.position.x = 0.0;
+    msg->info.origin.position.y = 0.0;
     msg->info.origin.position.z = 0.0;
     msg->info.origin.orientation.w = 1.0;
     // Set the map size
@@ -62,12 +62,10 @@ void GoToNode::map_timer_callback() {
     msg->data.resize(msg->info.width * msg->info.height);
     for (int y = 0; y < map_.rows; ++y) {
         for (int x = 0; x < map_.cols; ++x) {
-            // Here we're assuming that white (255) is free space and black (0) is occupied.
-            // Adjust as needed for your map.
             msg->data[y * msg->info.width + x] = 100 - (map_.at<unsigned char>(y, x) / 255.0 * 100);
         }
     }
-    // Publish the OccupancyGrid
+
     map_pub_->publish(*msg);
 }
 
