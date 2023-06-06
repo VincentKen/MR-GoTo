@@ -15,17 +15,17 @@ map = 'cave'
 
 
 def generate_launch_description():
-    # TODO: Write a launch file which starts the stage, mr_move, tuw_laserscan_features and mr_ekf or mr_pf.
-    goto_package = 'mr_goto'
-    goto_directory = get_package_share_directory(goto_package)
-
     stage = generate_stage_node()
     move = generate_move_node()
+    laserscan_features = generate_laserscan_features_node()
+    pf = generate_pf_node()
     ekf = generate_ekf_node()
 
     return LaunchDescription([
         *stage,
         *move,
+        *laserscan_features,
+        *pf,
         *ekf
     ])
 
@@ -63,14 +63,10 @@ def generate_stage_node():
 
 
 def generate_move_node():
-    package = 'mr_move'
-    name = 'move'
-
     return [
         Node(
-            package=package,
-            executable=name,
-            name=name,
+            package='mr_move',
+            executable='move',
             remappings=[('/scan', 'base_scan')],
             parameters=[{
                 "mode": "wanderer"
@@ -79,7 +75,17 @@ def generate_move_node():
     ]
 
 
-def generate_ekf_node():
+def generate_laserscan_features_node():
+    return [
+        Node(
+            package='tuw_laserscan_features',
+            executable='composed_node',
+            remappings=[('/scan', 'base_scan')],
+        )
+    ]
+
+
+def generate_pf_node():
     package = 'mr_pf'
     directory = get_package_share_directory(package)
 
@@ -121,6 +127,26 @@ def generate_ekf_node():
                 LaunchConfiguration(params_arg_name),
                 {
                     'map_file': LaunchConfiguration(map_file_arg_name)
+                }
+            ]
+        )
+    ]
+
+
+def generate_ekf_node():
+    package = 'mr_ekf'
+    directory = get_package_share_directory(package)
+
+    return [
+        Node(
+            package=package,
+            executable='ekf_node',
+            name='ekf',
+            remappings=[('/scan', 'base_scan')],
+            parameters=[
+                {
+                    'map_file': os.path.join(directory, "config/maps", map + '.png'),
+                    'map_linesegments_file': os.path.join(directory, "config/maps", map + '.yml')
                 }
             ]
         )
