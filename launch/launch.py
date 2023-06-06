@@ -99,12 +99,6 @@ def generate_pf_node():
         description='ROS2 parameters'
     )
 
-    pf_map_file_arg = DeclareLaunchArgument(
-        map_file_arg_name,
-        default_value=TextSubstitution(text=map),
-        description='map image file'
-    )
-
     def pf_configuration(context):
         yaml_file_path = os.path.join(directory, "config", yaml_file_name)
         png_file_path = os.path.join(directory, "config/maps", map + '.png')
@@ -115,7 +109,6 @@ def generate_pf_node():
     pf_configuration_arg = OpaqueFunction(function=pf_configuration)
 
     return [
-        pf_map_file_arg,
         pf_params_arg,
         pf_configuration_arg,
         Node(
