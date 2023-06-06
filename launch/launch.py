@@ -9,9 +9,9 @@ from launch.actions import DeclareLaunchArgument, OpaqueFunction, SetLaunchConfi
 from launch_ros.actions import Node
 
 
-# Note: Although it might be easier to read (less duplication) and less error prone by importing the existing generate_launch_description functions from 
+# Note: Although it might be easier to read (less duplication) and less error prone by importing the existing generate_launch_description functions from
 # the other launch files, we decided to copy and paste them into this file for simplicity reasons
-map = 'line'
+map = 'cave'
 
 
 def generate_launch_description():
@@ -25,20 +25,14 @@ def generate_launch_description():
 
     return LaunchDescription([
         *stage,
-        #*move,
+        *move,
         *ekf
     ])
 
 
 def generate_stage_node():
-    """
-    Generates and returns the node for the stage
-
-    Returns:
-    The stage node
-    """
-    stage_package = 'stage_ros2'
-    stage_directory = get_package_share_directory(stage_package)
+    package = 'stage_ros2'
+    directory = get_package_share_directory(package)
 
     stage_world_arg = DeclareLaunchArgument(
         'world',
@@ -47,17 +41,19 @@ def generate_stage_node():
     )
 
     def stage_world_configuration(context):
-        file = os.path.join(stage_directory, 'world', context.launch_configurations['world'] + '.world')
+        file = os.path.join(directory, 'world',
+                            context.launch_configurations['world'] + '.world')
         return [SetLaunchConfiguration('world_file', file)]
-    
-    stage_world_configuration_arg = OpaqueFunction(function=stage_world_configuration)
+
+    stage_world_configuration_arg = OpaqueFunction(
+        function=stage_world_configuration)
 
     return [
         stage_world_arg,
         stage_world_configuration_arg,
         Node(
-            package=stage_package,
-            executable=stage_package,
+            package=package,
+            executable=package,
             name='stage',
             parameters=[{
                 "world_file": [LaunchConfiguration('world_file')]
@@ -67,39 +63,48 @@ def generate_stage_node():
 
 
 def generate_move_node():
-    """
-    TODO: Generates and returns the node for the mr_move
+    package = 'mr_move'
+    name = 'move'
 
-    Returns:
-    The mr_move node
-    """
-    pass
+    return [
+        Node(
+            package=package,
+            executable=name,
+            name=name,
+            remappings=[('/scan', 'base_scan')],
+            parameters=[{
+                "mode": "wanderer"
+            }]
+        )
+    ]
 
 
 def generate_ekf_node():
-    pf_package = 'mr_pf'
-    pf_directory = get_package_share_directory(pf_package)
-    
+    package = 'mr_pf'
+    directory = get_package_share_directory(package)
+
+    yaml_file_name = 'particle_filter.yaml'
+    params_arg_name = 'particle_filter_params_file'
+    map_file_arg_name = 'particle_filter_map_file'
+
     pf_params_arg = DeclareLaunchArgument(
-        'particle_filter_params_file',
-        default_value=TextSubstitution(text='particle_filter.yaml'),
+        params_arg_name,
+        default_value=TextSubstitution(text=yaml_file_name),
         description='ROS2 parameters'
     )
-    
+
     pf_map_file_arg = DeclareLaunchArgument(
-        'particle_filter_map_file',
+        map_file_arg_name,
         default_value=TextSubstitution(text=map),
         description='map image file'
     )
 
     def pf_configuration(context):
-        yaml_file_name = 'particle_filter.yaml'
+        yaml_file_path = os.path.join(directory, "config", yaml_file_name)
+        png_file_path = os.path.join(directory, "config/maps", map + '.png')
 
-        yaml_file_path = os.path.join(pf_directory, "config", yaml_file_name)
-        png_file_path = os.path.join(pf_directory, "config/maps", map + '.png')
-
-        context.launch_configurations['particle_filter_params_file'] = yaml_file_path
-        context.launch_configurations['particle_filter_map_file'] = png_file_path
+        context.launch_configurations[params_arg_name] = yaml_file_path
+        context.launch_configurations[map_file_arg_name] = png_file_path
 
     pf_configuration_arg = OpaqueFunction(function=pf_configuration)
 
@@ -108,14 +113,14 @@ def generate_ekf_node():
         pf_params_arg,
         pf_configuration_arg,
         Node(
-            package=pf_package,
+            package=package,
             executable='pf_node',
             name='pf',
             remappings=[('/scan', 'base_scan')],
             parameters=[
-                LaunchConfiguration('particle_filter_params_file'),
+                LaunchConfiguration(params_arg_name),
                 {
-                    'map_file': LaunchConfiguration('particle_filter_map_file')
+                    'map_file': LaunchConfiguration(map_file_arg_name)
                 }
             ]
         )
