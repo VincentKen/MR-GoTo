@@ -4,7 +4,8 @@
 GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     // Create instance of GoTo class
     goto_ = std::make_shared<mr::GoTo>();
-
+    
+    // Init goal set state
     goal_set = false;
     
     sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -16,6 +17,11 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
         "goal_pose",
         10, std::bind(&GoToNode::callback_goal_pose, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "subscribed to goal_pose");
+
+    sub_laser_ = create_subscription<sensor_msgs::msg::LaserScan>(
+        "base_scan",
+        10, std::bind(&GoToNode::callback_laser, this, std::placeholders::_1));
+    RCLCPP_INFO(this->get_logger(), "subscribed to base_scan");
 
     cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10); //publisher for velocity command
 
@@ -51,4 +57,23 @@ void GoToNode::callback_goal_pose(const geometry_msgs::msg::PoseStamped::SharedP
     pose_goal_ = tuw::Pose2D(msg->pose.position.x, msg->pose.position.y, yaw);
     
     RCLCPP_INFO(this->get_logger(), ("Goal position: x=" + std::to_string(pose_goal_.get_x()) + " y=" + std::to_string(pose_goal_.get_y())).c_str());
+}
+
+
+void GoToNode::callback_laser(const sensor_msgs::msg::LaserScan::SharedPtr msg)
+{
+    scan_ = msg;
+
+    size_t n_measurements = scan_->ranges.size();
+    laser_measurments_.resize(n_measurements);
+    double x, y, angle;
+    
+    for ( size_t i = 0; i < n_measurements; i++ ) {
+      angle = scan_->angle_min + scan_->angle_increment * i;
+      x = 0.15 + cos(angle) * scan_->ranges[i];
+      y = sin(angle) * scan_->ranges[i];
+      laser_measurments_[i] = cv::Vec<double, 3> (x, y, 1.0);
+    }
+    //RCLCPP_INFO(this->get_logger(), ("Min laser scan: " + std::to_string(std::min_element(scan_->ranges.begin(), scan_->ranges.end())[0])).c_str());
+
 }
