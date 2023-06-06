@@ -1,5 +1,5 @@
 #include "mr_goto/mr_goto_node.hpp"
-
+#include "rclcpp/rclcpp.hpp"
 
 GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     // Create instance of GoTo class
@@ -29,10 +29,52 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
         std::chrono::milliseconds(5000),
         std::bind(&GoToNode::timer_callback, this)
     );
+
+    //timer for map publisher
+    map_timer_ = this->create_wall_timer(
+        std::chrono::milliseconds(1000),
+        std::bind(&GoToNode::map_timer_callback, this)
+    );
+
+    //publisher
+    map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("map", 10);
+
+    // Load the map from the PNG file here
+    map_ = cv::imread("ws02/src/MR-GoTo/config/world/bitmaps/line.png", cv::IMREAD_GRAYSCALE);
+    if (map_.empty()) {
+        RCLCPP_ERROR(this->get_logger(), "Failed to load map image.");
+        // Handle error...
+    }
 }
 
 void GoToNode::timer_callback() {
-    RCLCPP_INFO(this->get_logger(), "MR GOTO Timer Callback");
+    //RCLCPP_INFO(this->get_logger(), "MR GOTO Timer Callback");
+}
+
+void GoToNode::map_timer_callback() {
+    auto msg = std::make_shared<nav_msgs::msg::OccupancyGrid>();
+    // Fill out the header
+    msg->header.stamp = this->now();
+    msg->header.frame_id = "map";
+    // Set the map resolution (meters per pixel)
+    msg->info.resolution = 0.05;
+    // Set the map origin
+    msg->info.origin.position.x = 0.0;
+    msg->info.origin.position.y = 0.0;
+    msg->info.origin.position.z = 0.0;
+    msg->info.origin.orientation.w = 1.0;
+    // Set the map size
+    msg->info.width = map_.cols;
+    msg->info.height = map_.rows;
+    // Convert the map image data to an OccupancyGrid
+    msg->data.resize(msg->info.width * msg->info.height);
+    for (int y = 0; y < map_.rows; ++y) {
+        for (int x = 0; x < map_.cols; ++x) {
+            msg->data[y * msg->info.width + x] = 100 - (map_.at<unsigned char>(y, x) / 255.0 * 100);
+        }
+    }
+
+    map_pub_->publish(*msg);
 }
 
 void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr msg)
