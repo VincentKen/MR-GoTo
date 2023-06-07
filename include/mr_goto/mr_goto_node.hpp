@@ -23,6 +23,11 @@ public:
     __attribute__((visibility("default"))) GoToNode(rclcpp::NodeOptions options);
 
 private:
+    const std::string window_name_ = "GoTo Window";
+
+    cv::Matx33d Mw2m_;             /// transformation world to map
+    cv::Matx33d Mm2w_;             /// transformation map to world
+
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::TimerBase::SharedPtr map_timer_;
 
@@ -54,6 +59,8 @@ private:
 
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_pub_; //map publisher
     cv::Mat map_; //map matrix
+    tuw::Figure* figure_;
+    std::string map_loc_;
 };
 
 #endif

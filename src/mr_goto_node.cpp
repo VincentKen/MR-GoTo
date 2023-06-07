@@ -1,3 +1,4 @@
+#include <memory>
 #include "mr_goto/mr_goto_node.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -7,7 +8,12 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     
     // Init goal set state
     goal_set = false;
-    
+
+    // sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
+    //     "ground_truth",
+    //     10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
+    // RCLCPP_INFO(this->get_logger(), "subscribed to ground_truth");
+
     sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
         "pose_estimate",
         10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
@@ -40,10 +46,16 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("map", 10);
 
     // Load the map from the PNG file here
-    map_ = cv::imread("ws02/src/MR-GoTo/config/world/bitmaps/line.png", cv::IMREAD_GRAYSCALE);
+    std::string install_loc = std::getenv("MR_DIR");
+    map_loc_ = install_loc + "/ws02/src/mr_goto/config/world/bitmaps/line.png";
+    map_ = cv::imread(map_loc_, cv::IMREAD_GRAYSCALE);
     if (map_.empty()) {
-        RCLCPP_ERROR(this->get_logger(), "Failed to load map image.");
+        std::string message = "Failed to load map image from " + map_loc_;
+        RCLCPP_ERROR(this->get_logger(), message.c_str());
         // Handle error...
+    } else {
+        
+        
     }
 }
 
@@ -78,6 +90,17 @@ void GoToNode::map_timer_callback() {
     }
 
     map_pub_->publish(*msg);
+
+    // for now hardcoded figure. TODO get parameters from viz
+    if (!figure_) {
+        figure_ = new tuw::Figure(std::string("GoTo"));
+        figure_->init(588, 588, -9, 9, -9, 9, 3.141593, 1, 1, map_loc_);
+        cv::namedWindow(figure_->title(), 1);
+        cv::moveWindow(figure_->title(), 20, 20);
+    }
+    cv::imshow(figure_->title(), figure_->view());
+    cv::waitKey(1);
+
 }
 
 void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -85,8 +108,6 @@ void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr ms
     double yaw;
     tuw::QuaternionToYaw(msg->pose.pose.orientation, yaw);
     ground_truth_ = tuw::Pose2D(msg->pose.pose.position.x, msg->pose.pose.position.y, yaw);
-    //RCLCPP_INFO(this->get_logger(), std::to_string(msg->pose.pose.position.x).data());
-
     if(goal_set){
         auto publish_msg = goto_->goto_goal_straight(ground_truth_, pose_goal_);
         //RCLCPP_INFO(this->get_logger(), std::to_string(publish_msg.angular.z).data());
