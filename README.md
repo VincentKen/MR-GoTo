@@ -19,3 +19,12 @@ Build using `colcon build`
 
 ## Run
 Run using `ros2 run mr_goto mr_goto`
+
+## Launch
+You first need to execute
+```bash
+make build-ws02
+```
+in the project's root directory.
+
+Launch using `ros2 launch mr_goto launch.py`.
