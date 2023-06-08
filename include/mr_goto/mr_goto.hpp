@@ -4,6 +4,7 @@
 #include <tuw_geometry/tuw_geometry.hpp>
 #include "rclcpp/rclcpp.hpp"
 #include <geometry_msgs/msg/twist.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 
 namespace mr
 {
@@ -13,6 +14,7 @@ namespace mr
     public:
         GoTo();
         geometry_msgs::msg::Twist goto_goal_straight(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal);
+        geometry_msgs::msg::Twist goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal, sensor_msgs::msg::LaserScan::SharedPtr scan);
 
     private:
     };

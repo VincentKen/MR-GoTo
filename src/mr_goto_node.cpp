@@ -40,7 +40,7 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("map", 10);
 
     // Load the map from the PNG file here
-    map_ = cv::imread("ws02/src/MR-GoTo/config/world/bitmaps/line.png", cv::IMREAD_GRAYSCALE);
+    map_ = cv::imread("ws02/src/mr_goto/config/world/bitmaps/cave.png", cv::IMREAD_GRAYSCALE);
     if (map_.empty()) {
         RCLCPP_ERROR(this->get_logger(), "Failed to load map image.");
         // Handle error...
@@ -85,7 +85,8 @@ void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr ms
     //RCLCPP_INFO(this->get_logger(), std::to_string(msg->pose.pose.position.x).data());
 
     if(goal_set){
-        auto publish_msg = goto_->goto_goal_straight(ground_truth_, pose_goal_);
+        //auto publish_msg = goto_->goto_goal_straight(ground_truth_, pose_goal_);
+        auto publish_msg = goto_->goto_goal_avoid(ground_truth_, pose_goal_, scan_);
         //RCLCPP_INFO(this->get_logger(), std::to_string(publish_msg.angular.z).data());
         cmd_vel_pub_->publish(publish_msg);
     }
