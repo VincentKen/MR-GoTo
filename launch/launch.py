@@ -16,14 +16,12 @@ map = 'cave'
 
 def generate_launch_description():
     stage = generate_stage_node()
-    move = generate_move_node()
     laserscan_features = generate_laserscan_features_node()
     pf = generate_pf_node()
     ekf = generate_ekf_node()
 
     return LaunchDescription([
         *stage,
-        *move,
         *laserscan_features,
         *pf,
         *ekf
@@ -57,19 +55,6 @@ def generate_stage_node():
             name='stage',
             parameters=[{
                 "world_file": [LaunchConfiguration('world_file')]
-            }]
-        )
-    ]
-
-
-def generate_move_node():
-    return [
-        Node(
-            package='mr_move',
-            executable='move',
-            remappings=[('/scan', 'base_scan')],
-            parameters=[{
-                "mode": "wanderer"
             }]
         )
     ]
