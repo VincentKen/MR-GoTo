@@ -25,7 +25,7 @@ find_package(message_filters REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(mr_goto src/standalone_mr_goto.cpp src/mr_goto.cpp src/mr_goto_node.cpp)
+add_executable(mr_goto src/standalone_mr_goto.cpp src/mr_goto.cpp src/mr_goto_node.cpp src/mr_goto_bfs.cpp)
 target_include_directories(mr_goto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
