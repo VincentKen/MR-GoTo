@@ -1,7 +1,11 @@
+#ifndef MR_GOTO_BFS_
+#define MR_GOTO_BFS_
+
 #include <tuw_geometry/tuw_geometry.hpp>
 #include "opencv2/opencv.hpp"
 #include <algorithm>
 
+namespace mr{
 /**
  * Breadth First search classed used to find waypoints towards target 
  */
@@ -39,3 +43,5 @@ public:
      */
     static std::vector<tuw::Point2D> search(tuw::Point2D start, tuw::Point2D dest, cv::Mat *grid);
 };
+}
+#endif
