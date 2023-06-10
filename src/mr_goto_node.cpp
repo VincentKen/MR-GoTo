@@ -111,8 +111,8 @@ void GoToNode::map_timer_callback() {
         cv::namedWindow(figure_->title(), 1);
         cv::moveWindow(figure_->title(), 20, 20);
     }
-    cv::imshow(figure_->title(), figure_->view());
-    cv::waitKey(1);
+    // cv::imshow(figure_->title(), figure_->view());
+    // cv::waitKey(1);
 }
 
 void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr msg)
