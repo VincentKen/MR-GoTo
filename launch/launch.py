@@ -13,11 +13,12 @@ from launch_ros.actions import Node
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('localization', description='Localization method (pf or ekf)'),
-        DeclareLaunchArgument('map', default_value='cave', description='The map that is used'),
+        DeclareLaunchArgument('map', default_value='line', description='The map that is used'),
         generate_stage(),
         generate_laserscan_features(),
         generate_pf(),
-        generate_ekf()
+        generate_ekf(),
+        generate_goto()
     ])
 
 
@@ -131,5 +132,32 @@ def generate_ekf():
                 }
             ],
             condition=IfCondition(PythonExpression(["'", LaunchConfiguration('localization'), "' == 'ekf'"]))
+        )
+    ])
+
+
+def generate_goto():
+    package = 'mr_goto'
+    directory = get_package_share_directory(package)
+
+    map_file_arg_name = 'goto_map_file'
+
+    def goto_configuration(context):
+        map_path = os.path.join(directory, "config/world/bitmaps", context.launch_configurations['map'])
+        context.launch_configurations[map_file_arg_name] = map_path + '.png'
+
+    goto_configuration_arg = OpaqueFunction(function=goto_configuration)
+
+    return GroupAction([
+        goto_configuration_arg,
+        Node(
+            package=package,
+            executable='mr_goto',
+            name='goto',
+            parameters=[
+                {
+                    'map_file': LaunchConfiguration(map_file_arg_name)
+                }
+            ]
         )
     ])

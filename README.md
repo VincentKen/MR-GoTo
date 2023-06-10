@@ -20,6 +20,17 @@ Build using `colcon build`
 ## Run
 Run using `ros2 run mr_goto mr_goto`
 
+### Run with map
+We can also choose the map file we want `mr_goto` to run with.
+```bash
+ros2 run mr_goto mr_goto --ros-args -p map_file:=<path_to_map>
+```
+For example:
+```bash
+ros2 launch mr_goto launch.py map:=ws02/src/mr_goto/config/world/bitmaps/cave.png
+```
+Note: Per default, we are using the `line` map.
+
 ## Launch
 You first need to execute
 ```bash
@@ -41,7 +52,7 @@ For example:
 ```bash
 ros2 launch mr_goto launch.py map:=cave
 ```
-Note: Per default, we are using the `cave` map.
+Note: Per default, we are using the `line` map.
 
 ### Optional ekf or pf
 For launching the `ekf` or `pf` node, execute

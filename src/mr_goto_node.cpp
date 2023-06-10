@@ -7,6 +7,14 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     
     // Init goal set state
     goal_set = false;
+
+    // Set the map_file parameter
+    std::string map_file_;
+    {
+        auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+        descriptor.description = "Path to the map file";
+        map_file_ = this->declare_parameter<std::string>("map_file", "ws02/src/mr_goto/config/world/bitmaps/line.png", descriptor);
+    }
     
     sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
         "pose_estimate",
@@ -40,9 +48,9 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("map", 10);
 
     // Load the map from the PNG file here
-    map_ = cv::imread("ws02/src/MR-GoTo/config/world/bitmaps/line.png", cv::IMREAD_GRAYSCALE);
+    map_ = cv::imread(map_file_, cv::IMREAD_GRAYSCALE);
     if (map_.empty()) {
-        RCLCPP_ERROR(this->get_logger(), "Failed to load map image.");
+        RCLCPP_ERROR(this->get_logger(), "Failed to load map image");
         // Handle error...
     }
 }
