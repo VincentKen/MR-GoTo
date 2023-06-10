@@ -12,8 +12,8 @@ namespace mr{
 class GoToBFS {
 private:
     struct Node {
-        Node(tuw::Point2D p, Node *prev) : p(p), prev(prev) {}
-        tuw::Point2D p;
+        Node(tuw::Pose2D p, Node *prev) : p(p), prev(prev) {}
+        tuw::Pose2D p;
         Node *prev;
     };
 
@@ -32,7 +32,7 @@ private:
     /**
      * Traverses the vector to see if it contains p 
      */
-    static bool contains(const tuw::Point2D p, const std::vector<tuw::Point2D> v);
+    static bool contains(const tuw::Pose2D p, const std::vector<tuw::Pose2D> v);
 public:
 
     /**
@@ -41,7 +41,7 @@ public:
      * @param dest  The destination to search for
      * @param grid  Grid to search for path on. Note, only values with 0 are seen as traversable
      */
-    static std::vector<tuw::Point2D> search(tuw::Point2D start, tuw::Point2D dest, cv::Mat *grid);
+    static std::vector<tuw::Pose2D> search(tuw::Pose2D start, tuw::Pose2D dest, cv::Mat *grid);
 };
 }
 #endif

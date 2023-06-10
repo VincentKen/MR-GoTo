@@ -48,9 +48,8 @@ geometry_msgs::msg::Twist GoTo::goto_goal_straight(tuw::Pose2D pose_robot, tuw::
     return twist_msg;
 }
 
-std::vector<tuw::Point2D> GoTo::pathfinder_waypoints(tuw::Pose2D start, tuw::Pose2D target, tuw::Figure* figure) {
+std::vector<tuw::Pose2D> GoTo::pathfinder_waypoints(tuw::Pose2D start, tuw::Pose2D target, tuw::Figure* figure) {
     pathfinder_calculate_occupancy_grid(figure);
-
     tuw::Point2D s = figure->w2m(start.position());
     tuw::Point2D t = figure->w2m(target.position());
     s.set_x(int(s.x()));
@@ -60,19 +59,17 @@ std::vector<tuw::Point2D> GoTo::pathfinder_waypoints(tuw::Pose2D start, tuw::Pos
 
     s = pathfinder_figure_to_grid(&s, figure);
     t = pathfinder_figure_to_grid(&t, figure);
-    std::vector<tuw::Point2D> waypoints = mr::GoToBFS::search(s, t, &grid_);
-    cv::Scalar color = Figure::blue;
-    figure->clear();
-    figure->circle(start.position(), 2, Figure::green, 1);
-    figure->circle(target.position(), 2, Figure::red, 1);
+    std::vector<tuw::Pose2D> waypoints = mr::GoToBFS::search(tuw::Pose2D(s, start.theta()), tuw::Pose2D(t, target.theta()), &grid_);
+    std::vector<tuw::Pose2D> translated_waypoints;
+    
     for (auto p : waypoints) {
-        std::cout << p.x() << "," << p.y() << " -> ";
-        p = pathfinder_grid_to_figure(&p, figure);
-        p = figure->m2w(p);
-        figure->circle(p, 2, color, 1);
+        tuw::Point2D np = pathfinder_grid_to_figure(&p.position(), figure);
+        np = figure->m2w(np);
+        p.set_x(np.x());
+        p.set_y(np.y());
+        translated_waypoints.emplace_back(p);
     }
-    std::cout << std::endl;
-    return waypoints;
+    return translated_waypoints;
 }
 
 tuw::Point2D GoTo::pathfinder_grid_to_figure(const tuw::Point2D *p, const tuw::Figure *figure) {
@@ -112,22 +109,21 @@ void GoTo::pathfinder_calculate_occupancy_grid(tuw::Figure *figure) {
 
     // quick and dirty convolution
     // if a pixel is not white, make its neighbours also not white, do this a certain amount of times
-    for (int k = 0; k < 5; k++) {
-        for (int i = 1; i < background_.rows - 1; i++) {
-            for (int j = 1; j < background_.cols - 1; j++) {
-                auto v = background_.at<cv::Vec3b>(i, j);
-                if (v[0] != 255 && v[1] != 255 && v[2] != 255) {
-                    cp.at<cv::Vec3b>(i - 1, j) = cv::Vec3b(0, 0, 0);
-                    cp.at<cv::Vec3b>(i + 1, j) = cv::Vec3b(0, 0, 0);
-                    cp.at<cv::Vec3b>(i, j - 1) = cv::Vec3b(0, 0, 0);
-                    cp.at<cv::Vec3b>(i, j + 1) = cv::Vec3b(0, 0, 0);
-                }
-            }
-        }
-        cp.copyTo(background_);
-    }
+    // for (int k = 0; k < 5; k++) {
+    //     for (int i = 1; i < background_.rows - 1; i++) {
+    //         for (int j = 1; j < background_.cols - 1; j++) {
+    //             auto v = background_.at<cv::Vec3b>(i, j);
+    //             if (v[0] != 255 && v[1] != 255 && v[2] != 255) {
+    //                 cp.at<cv::Vec3b>(i - 1, j) = cv::Vec3b(0, 0, 0);
+    //                 cp.at<cv::Vec3b>(i + 1, j) = cv::Vec3b(0, 0, 0);
+    //                 cp.at<cv::Vec3b>(i, j - 1) = cv::Vec3b(0, 0, 0);
+    //                 cp.at<cv::Vec3b>(i, j + 1) = cv::Vec3b(0, 0, 0);
+    //             }
+    //         }
+    //     }
+    //     cp.copyTo(background_);
+    // }
 
-    std::cout << "creating occupancy" << std::endl;
     for (int i = 0; i < background_.rows; i++) {
         for (int j = 0; j < background_.cols; j++) {
             auto v = background_.at<cv::Vec3b>(i, j);

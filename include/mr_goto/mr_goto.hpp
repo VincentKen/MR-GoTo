@@ -14,7 +14,7 @@ namespace mr
     public:
         GoTo();
         geometry_msgs::msg::Twist goto_goal_straight(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal);
-        std::vector<tuw::Point2D> pathfinder_waypoints(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal, tuw::Figure *figure);
+        std::vector<tuw::Pose2D> pathfinder_waypoints(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal, tuw::Figure *figure);
 
     private:
         tuw::Point2D pathfinder_grid_to_figure(const tuw::Point2D *p, const tuw::Figure *figure);
