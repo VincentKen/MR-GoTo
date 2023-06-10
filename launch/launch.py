@@ -4,31 +4,27 @@ import os
 
 from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
-from launch.substitutions import LaunchConfiguration, TextSubstitution
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, SetLaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution, PythonExpression
+from launch.actions import GroupAction, DeclareLaunchArgument, OpaqueFunction, SetLaunchConfiguration
+from launch.conditions import IfCondition
 from launch_ros.actions import Node
 
 
-# Note: Although it might be easier to read (less duplication) and less error prone by importing the existing generate_launch_description functions from
-# the other launch files, we decided to copy and paste them into this file for simplicity reasons
 map = 'cave'
 
 
 def generate_launch_description():
-    stage = generate_stage_node()
-    laserscan_features = generate_laserscan_features_node()
-    pf = generate_pf_node()
-    ekf = generate_ekf_node()
 
     return LaunchDescription([
-        *stage,
-        *laserscan_features,
-        *pf,
-        *ekf
+        DeclareLaunchArgument('localization'),
+        generate_stage(),
+        generate_laserscan_features(),
+        generate_pf(),
+        generate_ekf()
     ])
 
 
-def generate_stage_node():
+def generate_stage():
     package = 'stage_ros2'
     directory = get_package_share_directory(package)
 
@@ -46,7 +42,7 @@ def generate_stage_node():
     stage_world_configuration_arg = OpaqueFunction(
         function=stage_world_configuration)
 
-    return [
+    return GroupAction([
         stage_world_arg,
         stage_world_configuration_arg,
         Node(
@@ -57,20 +53,18 @@ def generate_stage_node():
                 "world_file": [LaunchConfiguration('world_file')]
             }]
         )
-    ]
+    ])
 
 
-def generate_laserscan_features_node():
-    return [
-        Node(
-            package='tuw_laserscan_features',
-            executable='composed_node',
-            remappings=[('/scan', 'base_scan')],
-        )
-    ]
+def generate_laserscan_features():
+    return Node(
+        package='tuw_laserscan_features',
+        executable='composed_node',
+        remappings=[('/scan', 'base_scan')],
+    )
 
 
-def generate_pf_node():
+def generate_pf():
     package = 'mr_pf'
     directory = get_package_share_directory(package)
 
@@ -93,7 +87,7 @@ def generate_pf_node():
 
     pf_configuration_arg = OpaqueFunction(function=pf_configuration)
 
-    return [
+    return GroupAction([
         pf_params_arg,
         pf_configuration_arg,
         Node(
@@ -106,26 +100,26 @@ def generate_pf_node():
                 {
                     'map_file': LaunchConfiguration(map_file_arg_name)
                 }
-            ]
+            ],
+            condition=IfCondition(PythonExpression(["'", LaunchConfiguration('localization'), "' == 'pf'"]))
         )
-    ]
+    ])
 
 
-def generate_ekf_node():
+def generate_ekf():
     package = 'mr_ekf'
     directory = get_package_share_directory(package)
 
-    return [
-        Node(
-            package=package,
-            executable='ekf_node',
-            name='ekf',
-            remappings=[('/scan', 'base_scan')],
-            parameters=[
-                {
-                    'map_file': os.path.join(directory, "config/maps", map + '.png'),
-                    'map_linesegments_file': os.path.join(directory, "config/maps", map + '.yml')
-                }
-            ]
-        )
-    ]
+    return Node(
+        package=package,
+        executable='ekf_node',
+        name='ekf',
+        remappings=[('/scan', 'base_scan')],
+        parameters=[
+            {
+                'map_file': os.path.join(directory, "config/maps", map + '.png'),
+                'map_linesegments_file': os.path.join(directory, "config/maps", map + '.yml')
+            }
+        ],
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('localization'), "' == 'ekf'"]))
+    )

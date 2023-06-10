@@ -28,3 +28,9 @@ make build-ws02
 in the project's root directory.
 
 Launch using `ros2 launch mr_goto launch.py`.
+
+### Optional ekf or pf
+For launching the `ekf` or `pf` node, execute
+```bash
+ros2 launch mr_goto launch.py localization:=<node>
+```
