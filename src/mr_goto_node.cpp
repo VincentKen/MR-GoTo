@@ -38,7 +38,7 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
 
     //timer for map publisher
     map_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(1000),
+        std::chrono::milliseconds(5000),
         std::bind(&GoToNode::map_timer_callback, this)
     );
 
@@ -61,8 +61,7 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
 }
 
 void GoToNode::timer_callback() {
-
-        
+    
 }
 
 void GoToNode::map_timer_callback() {
@@ -93,23 +92,21 @@ void GoToNode::map_timer_callback() {
 
     map_pub_->publish(*msg);
 
-    // for now hardcoded figure. TODO get parameters from viz
     if (!figure_) {
         figure_ = new tuw::Figure(std::string("GoTo"));
-        double min_x = -9, min_y = -9;
-        double max_x = 9, max_y = 9;
+        double min_x = - (map_.cols * msg->info.resolution / 2);
+        double min_y = - (map_.rows * msg->info.resolution / 2);
+        double max_x = -min_x;
+        double max_y = -min_y;
         int height = max_x - min_x;
         int width = max_y - min_y;
-        int width_pixels = 600;
-        int height_pixels = 600;
-        // make sure the width and height in pixels is evenly divisable by the width and height in meters
-        // this is so that grid_to_figure and figure_to_grid calculations work correctly for the pathfinding
-        width_pixels = int(width_pixels/width)*width;
-        height_pixels = int(height_pixels/height)*height;
+        int width_pixels = map_.cols;
+        int height_pixels = map_.rows;
 
-        figure_->init(width_pixels, height_pixels, -9, 9, -9, 9, 3.141593, 1, 1, map_loc_);
-        cv::namedWindow(figure_->title(), 1);
-        cv::moveWindow(figure_->title(), 20, 20);
+        figure_->init(width_pixels, height_pixels, min_y, max_y, min_x, max_x, M_PI, 1, 1, map_loc_);
+        // cv::namedWindow(figure_->title(), 1);
+        // cv::moveWindow(figure_->title(), 20, 20);
+        
     }
     // cv::imshow(figure_->title(), figure_->view());
     // cv::waitKey(1);
