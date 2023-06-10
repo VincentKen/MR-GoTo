@@ -32,7 +32,7 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10); //publisher for velocity command
 
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(5000),
+        std::chrono::milliseconds(40000),
         std::bind(&GoToNode::timer_callback, this)
     );
 
@@ -44,6 +44,7 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
 
     //publisher
     map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("map", 10);
+    path_pub_ = this->create_publisher<nav_msgs::msg::Path>("nav_msgs/Path", 10);
 
     // Load the map from the PNG file here
     std::string install_loc = std::getenv("MR_DIR");
@@ -60,7 +61,8 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
 }
 
 void GoToNode::timer_callback() {
-    //RCLCPP_INFO(this->get_logger(), "MR GOTO Timer Callback");
+
+        
 }
 
 void GoToNode::map_timer_callback() {
@@ -94,13 +96,23 @@ void GoToNode::map_timer_callback() {
     // for now hardcoded figure. TODO get parameters from viz
     if (!figure_) {
         figure_ = new tuw::Figure(std::string("GoTo"));
-        figure_->init(588, 588, -9, 9, -9, 9, 3.141593, 1, 1, map_loc_);
+        double min_x = -9, min_y = -9;
+        double max_x = 9, max_y = 9;
+        int height = max_x - min_x;
+        int width = max_y - min_y;
+        int width_pixels = 600;
+        int height_pixels = 600;
+        // make sure the width and height in pixels is evenly divisable by the width and height in meters
+        // this is so that grid_to_figure and figure_to_grid calculations work correctly for the pathfinding
+        width_pixels = int(width_pixels/width)*width;
+        height_pixels = int(height_pixels/height)*height;
+
+        figure_->init(width_pixels, height_pixels, -9, 9, -9, 9, 3.141593, 1, 1, map_loc_);
         cv::namedWindow(figure_->title(), 1);
         cv::moveWindow(figure_->title(), 20, 20);
     }
     cv::imshow(figure_->title(), figure_->view());
     cv::waitKey(1);
-
 }
 
 void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -122,6 +134,25 @@ void GoToNode::callback_goal_pose(const geometry_msgs::msg::PoseStamped::SharedP
     tuw::QuaternionToYaw(msg->pose.orientation, yaw);
     pose_goal_ = tuw::Pose2D(msg->pose.position.x, msg->pose.position.y, yaw);
     
+    if (figure_) {
+        tuw::Poses2D waypoints = goto_->pathfinder_waypoints(ground_truth_, pose_goal_, figure_);
+
+        nav_msgs::msg::Path path;
+        path.header.stamp = this->now();
+        path.header.frame_id = "nav_msgs/Path";
+
+        for (auto p : waypoints) {
+            geometry_msgs::msg::PoseStamped pose_msg;
+            pose_msg.header.frame_id = "geometry_msgs/PoseStamped"; // no idea what a frame is or what this frame_id is supposed to be
+            pose_msg.header.stamp = this->now();
+            geometry_msgs::msg::Pose pose;
+            p.copyToROSPose<geometry_msgs::msg::Pose>(pose);
+            pose_msg.pose = pose;
+            path.poses.push_back(pose_msg);
+        }
+        path_pub_->publish(path);
+    }
+
     RCLCPP_INFO(this->get_logger(), ("Goal position: x=" + std::to_string(pose_goal_.get_x()) + " y=" + std::to_string(pose_goal_.get_y())).c_str());
 }
 

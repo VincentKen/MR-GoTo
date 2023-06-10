@@ -4,6 +4,7 @@
 #include <mutex>
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include "nav2_msgs/srv/load_map.hpp"
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <tuw_geometry/tuw_geometry.hpp>
@@ -58,6 +59,7 @@ private:
     std::shared_ptr<mr::GoTo> goto_;         /// pointer to the actual particle filter
 
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_pub_; //map publisher
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
     cv::Mat map_; //map matrix
     tuw::Figure* figure_;
     std::string map_loc_;
