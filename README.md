@@ -27,10 +27,28 @@ make build-ws02
 ```
 in the project's root directory.
 
-Launch using `ros2 launch mr_goto launch.py`.
+Launch using
+```bash
+ros2 launch mr_goto launch.py
+```
+
+### Launch with map
+You can also specify the map you want to use by using an additional `map` argument.
+```bash
+ros2 launch mr_goto launch.py map:=<map_name>
+```
+For example:
+```bash
+ros2 launch mr_goto launch.py map:=cave
+```
+Note: Per default, we are using the `cave` map.
 
 ### Optional ekf or pf
 For launching the `ekf` or `pf` node, execute
 ```bash
 ros2 launch mr_goto launch.py localization:=<node>
+```
+For example:
+```bash
+ros2 launch mr_goto launch.py localization:=ekf
 ```

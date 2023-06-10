@@ -10,13 +10,10 @@ from launch.conditions import IfCondition
 from launch_ros.actions import Node
 
 
-map = 'cave'
-
-
 def generate_launch_description():
-
     return LaunchDescription([
-        DeclareLaunchArgument('localization'),
+        DeclareLaunchArgument('localization', description='Localization method (pf or ekf)'),
+        DeclareLaunchArgument('map', default_value='cave', description='The map that is used'),
         generate_stage(),
         generate_laserscan_features(),
         generate_pf(),
@@ -28,19 +25,18 @@ def generate_stage():
     package = 'stage_ros2'
     directory = get_package_share_directory(package)
 
-    stage_world_arg = DeclareLaunchArgument(
-        'world',
-        default_value=TextSubstitution(text=map),
-        description='World file relative to the project world file, without .world'
-    )
+    def stage_world_name(context):
+        return [SetLaunchConfiguration('world', context.launch_configurations['map'])]
+
+    stage_world_arg = OpaqueFunction(function=stage_world_name)
+
+    world_file_arg_name = 'world_file'
 
     def stage_world_configuration(context):
-        file = os.path.join(directory, 'world',
-                            context.launch_configurations['world'] + '.world')
-        return [SetLaunchConfiguration('world_file', file)]
+        file = os.path.join(directory, 'world', context.launch_configurations['world'] + '.world')
+        return [SetLaunchConfiguration(world_file_arg_name, file)]
 
-    stage_world_configuration_arg = OpaqueFunction(
-        function=stage_world_configuration)
+    stage_world_configuration_arg = OpaqueFunction(function=stage_world_configuration)
 
     return GroupAction([
         stage_world_arg,
@@ -50,7 +46,7 @@ def generate_stage():
             executable=package,
             name='stage',
             parameters=[{
-                "world_file": [LaunchConfiguration('world_file')]
+                "world_file": [LaunchConfiguration(world_file_arg_name)]
             }]
         )
     ])
@@ -80,7 +76,7 @@ def generate_pf():
 
     def pf_configuration(context):
         yaml_file_path = os.path.join(directory, "config", yaml_file_name)
-        png_file_path = os.path.join(directory, "config/maps", map + '.png')
+        png_file_path = os.path.join(directory, "config/maps", context.launch_configurations['map'] + '.png')
 
         context.launch_configurations[params_arg_name] = yaml_file_path
         context.launch_configurations[map_file_arg_name] = png_file_path
@@ -110,16 +106,30 @@ def generate_ekf():
     package = 'mr_ekf'
     directory = get_package_share_directory(package)
 
-    return Node(
-        package=package,
-        executable='ekf_node',
-        name='ekf',
-        remappings=[('/scan', 'base_scan')],
-        parameters=[
-            {
-                'map_file': os.path.join(directory, "config/maps", map + '.png'),
-                'map_linesegments_file': os.path.join(directory, "config/maps", map + '.yml')
-            }
-        ],
-        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('localization'), "' == 'ekf'"]))
-    )
+    map_file_arg_name = 'kalman_filter_map_file'
+    map_linesegments_file_arg_name = 'kalman_filter_linesegments_file'
+
+    def ekf_configuration(context):
+        map_path = os.path.join(directory, "config/maps", context.launch_configurations['map'])
+
+        context.launch_configurations[map_file_arg_name] = map_path + '.png'
+        context.launch_configurations[map_linesegments_file_arg_name] = map_path + '.yml'
+    
+    ekf_configuration_arg = OpaqueFunction(function=ekf_configuration)
+
+    return GroupAction([
+        ekf_configuration_arg,
+        Node(
+            package=package,
+            executable='ekf_node',
+            name='ekf',
+            remappings=[('/scan', 'base_scan')],
+            parameters=[
+                {
+                    'map_file': LaunchConfiguration(map_file_arg_name),
+                    'map_linesegments_file': LaunchConfiguration(map_linesegments_file_arg_name)
+                }
+            ],
+            condition=IfCondition(PythonExpression(["'", LaunchConfiguration('localization'), "' == 'ekf'"]))
+        )
+    ])
