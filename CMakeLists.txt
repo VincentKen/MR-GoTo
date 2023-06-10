@@ -48,6 +48,17 @@ ament_target_dependencies(mr_goto
 
 install(TARGETS mr_goto
   DESTINATION lib/${PROJECT_NAME})
+install(
+  DIRECTORY
+    launch
+    config
+  DESTINATION
+    share/${PROJECT_NAME}/
+)
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
