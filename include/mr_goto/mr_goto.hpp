@@ -15,7 +15,7 @@ namespace mr
         GoTo();
         geometry_msgs::msg::Twist goto_goal_straight(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal);
         geometry_msgs::msg::Twist goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal, sensor_msgs::msg::LaserScan::SharedPtr scan);
-
+        float getRangeAtAngle(sensor_msgs::msg::LaserScan::SharedPtr scan, float angle);
     private:
     };
 }

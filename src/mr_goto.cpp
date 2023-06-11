@@ -48,6 +48,7 @@ geometry_msgs::msg::Twist GoTo::goto_goal_straight(tuw::Pose2D pose_robot, tuw::
 geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pose2D pose_goal, sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
     static auto twist_msg = geometry_msgs::msg::Twist();
+    static int turning_from_obstacle = 0;
 
     double max_speed = 0.8;
     double unsafe_dist_val = 0.6;
@@ -109,13 +110,21 @@ geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pos
     // Only if there is no obstacle in front
     if(!obstacle_in_front && abs(orientation_error) > 0.01 && dist_to_goal > 0.01){
         // Check if we are not turning into a wall
-        if(orientation_error < 0 ? (right_ranges_sum > 120) : (left_ranges_sum > 120)){
+        if(orientation_error < 0 ? (getRangeAtAngle(scan, -M_PI/2) > 0.7) : (getRangeAtAngle(scan, M_PI/2) > 0.7)){
             twist_msg.angular.z = 2 * orientation_error;
+            //std::cout << "turning to goal" << endl;
         }
         else{
             twist_msg.angular.z = 0.0;
         }
-        twist_msg.linear.x = min(2.0, 0.1 + dist_to_goal);
+        // Drive when not very close to goal
+        if(dist_to_goal > 1.0){
+            twist_msg.linear.x = min(max_speed, 0.1 + dist_to_goal);
+        } 
+        // If very close to goal just turn and not drive. Otherwise robot circles around goal sometimes
+        else {
+            twist_msg.linear.x= 0.0;
+        }
     }
     // Facing goal or obstacle
     else{
@@ -124,12 +133,18 @@ geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pos
             // Obstacle infront -> turn
             if(obstacle_in_front){
                 twist_msg.linear.x = 0.0;
-                twist_msg.angular.z = right_ranges_sum < left_ranges_sum ? 0.5 : -0.5;
+                if(turning_from_obstacle == 0){
+                    turning_from_obstacle = right_ranges_sum < left_ranges_sum ? 1 : -1;
+                }
+                twist_msg.angular.z = turning_from_obstacle * 0.5;
+                //std::cout << "turning from obstacle" << endl;
             }
             // Drive straight
             else {
                 twist_msg.linear.x = min(max_speed, 0.1 + dist_to_goal);
                 twist_msg.angular.z = 0.0;
+                turning_from_obstacle = 0;
+
             }
             
         }
@@ -141,4 +156,18 @@ geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pos
         }
     }
     return twist_msg;
+}
+
+float GoTo::getRangeAtAngle(sensor_msgs::msg::LaserScan::SharedPtr scan, float angle)
+{
+    // Convert angle to index in the ranges array
+    float angleIncrement = scan->angle_increment;
+    float startAngle = scan->angle_min;
+    int index = static_cast<int>((angle - startAngle) / angleIncrement);
+
+    // Return the range value at the calculated index
+    if (index >= 0 && static_cast<size_t>(index) < scan->ranges.size())
+        return scan->ranges[index];
+    else
+        return 0.0f; // Return 0 if index is out of range
 }
