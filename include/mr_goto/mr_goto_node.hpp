@@ -26,6 +26,9 @@ public:
 private:
     const std::string window_name_ = "GoTo Window";
 
+    std::string map_param_;
+    std::string pos_estim_param_;
+
     cv::Matx33d Mw2m_;             /// transformation world to map
     cv::Matx33d Mm2w_;             /// transformation map to world
 
@@ -33,8 +36,8 @@ private:
     rclcpp::TimerBase::SharedPtr map_timer_;
 
     // Ground-truth robot pose
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_ground_truth_; /// subscriber ground truth pose (simulation)
-    tuw::Pose2D ground_truth_;                                                  /// local copy of the last ground truth pose
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_pose_; /// subscriber ground truth pose (simulation)
+    tuw::Pose2D pose_;                                                  /// local copy of the last ground truth pose
 
     // Goal pose
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_goal_pose_;
@@ -52,7 +55,7 @@ private:
     
     void timer_callback();
     void map_timer_callback();
-    void callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr msg);
+    void callback_pose(const nav_msgs::msg::Odometry::SharedPtr msg);
     void callback_goal_pose(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
     void callback_laser(const sensor_msgs::msg::LaserScan::SharedPtr msg);
 
