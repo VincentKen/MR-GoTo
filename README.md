@@ -14,6 +14,19 @@ also in your ekf.cpp add `reset_ = Reset::INTI_POSE;` to set_init_pose
         *init_pose_ = p;
     reset_ = Reset::INTI_POSE;
 }`
+
+same for pf
+replace particle_filter_node.cpp and particle_filter_node.hpp with the ones in MR_PF
+also in your particle.cpp add `reset_ = Reset::INTI_POSE;` to set_init_pose
+`void ParticleFilter::set_init_pose(const Pose2D &p)
+{
+    if (!init_pose_)
+        init_pose_ = make_shared<Pose2D>(p);
+    else
+        *init_pose_ = p;
+    reset_ = Reset::INTI_POSE;
+}`
+
 ## Build
 Build using `colcon build`
 
