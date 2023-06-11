@@ -27,6 +27,15 @@ also in your particle.cpp add `reset_ = Reset::INTI_POSE;` to set_init_pose
     reset_ = Reset::INTI_POSE;
 }`
 
+tuw::Pose2DPtr ParticleFilter::compute_estimated_pose()
+{
+    if (!samples_.empty()){
+        std::sort(samples_.begin(), samples_.end(), Sample<Pose2D>::greater);
+        estimated_pose_ = samples_.at(0);
+    }
+    return estimated_pose_;
+}
+
 ## Build
 Build using `colcon build`
 
