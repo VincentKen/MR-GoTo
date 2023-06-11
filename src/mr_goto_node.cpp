@@ -1,3 +1,4 @@
+#include <memory>
 #include "mr_goto/mr_goto_node.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -7,11 +8,16 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     
     // Init goal set state
     goal_set = false;
-    
+
+    // sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
+    //     "ground_truth",
+    //     10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
+    // RCLCPP_INFO(this->get_logger(), "subscribed to ground_truth");
+
     sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
-        "ground_truth",
+        "pose_estimate",
         10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
-    RCLCPP_INFO(this->get_logger(), "subscribed to ground_truth");
+    RCLCPP_INFO(this->get_logger(), "subscribed to pose_estimate");
 
     sub_goal_pose_ = create_subscription<geometry_msgs::msg::PoseStamped>(
         "goal_pose",
@@ -26,29 +32,36 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10); //publisher for velocity command
 
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(5000),
+        std::chrono::milliseconds(40000),
         std::bind(&GoToNode::timer_callback, this)
     );
 
     //timer for map publisher
     map_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(1000),
+        std::chrono::milliseconds(5000),
         std::bind(&GoToNode::map_timer_callback, this)
     );
 
     //publisher
     map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("map", 10);
+    path_pub_ = this->create_publisher<nav_msgs::msg::Path>("nav_msgs/Path", 10);
 
     // Load the map from the PNG file here
-    map_ = cv::imread("ws02/src/mr_goto/config/world/bitmaps/cave.png", cv::IMREAD_GRAYSCALE);
+    std::string install_loc = std::getenv("MR_DIR");
+    map_loc_ = install_loc + "/ws02/src/mr_goto/config/world/bitmaps/line.png";
+    map_ = cv::imread(map_loc_, cv::IMREAD_GRAYSCALE);
     if (map_.empty()) {
-        RCLCPP_ERROR(this->get_logger(), "Failed to load map image.");
+        std::string message = "Failed to load map image from " + map_loc_;
+        RCLCPP_ERROR(this->get_logger(), message.c_str());
         // Handle error...
+    } else {
+        
+        
     }
 }
 
 void GoToNode::timer_callback() {
-    //RCLCPP_INFO(this->get_logger(), "MR GOTO Timer Callback");
+    
 }
 
 void GoToNode::map_timer_callback() {
@@ -57,10 +70,10 @@ void GoToNode::map_timer_callback() {
     msg->header.stamp = this->now();
     msg->header.frame_id = "map";
     // Set the map resolution (meters per pixel)
-    msg->info.resolution = 0.05;
+    msg->info.resolution = 0.03;
     // Set the map origin
-    msg->info.origin.position.x = 0.0;
-    msg->info.origin.position.y = 0.0;
+    msg->info.origin.position.x = -map_.cols / 2.0 * msg->info.resolution;
+    msg->info.origin.position.y = -map_.rows / 2.0 * msg->info.resolution;
     msg->info.origin.position.z = 0.0;
     msg->info.origin.orientation.w = 1.0;
     // Set the map size
@@ -70,11 +83,33 @@ void GoToNode::map_timer_callback() {
     msg->data.resize(msg->info.width * msg->info.height);
     for (int y = 0; y < map_.rows; ++y) {
         for (int x = 0; x < map_.cols; ++x) {
-            msg->data[y * msg->info.width + x] = 100 - (map_.at<unsigned char>(y, x) / 255.0 * 100);
+            // Flip Y
+            int flipped_y = map_.rows - y - 1;
+            // Copy pixel data
+            msg->data[flipped_y * msg->info.width + x] = 100 - (map_.at<unsigned char>(y, x) / 255.0 * 100);
         }
     }
 
     map_pub_->publish(*msg);
+
+    if (!figure_) {
+        figure_ = new tuw::Figure(std::string("GoTo"));
+        double min_x = - (map_.cols * msg->info.resolution / 2);
+        double min_y = - (map_.rows * msg->info.resolution / 2);
+        double max_x = -min_x;
+        double max_y = -min_y;
+        int height = max_x - min_x;
+        int width = max_y - min_y;
+        int width_pixels = map_.cols;
+        int height_pixels = map_.rows;
+
+        figure_->init(width_pixels, height_pixels, min_y, max_y, min_x, max_x, M_PI, 1, 1, map_loc_);
+        // cv::namedWindow(figure_->title(), 1);
+        // cv::moveWindow(figure_->title(), 20, 20);
+        
+    }
+    // cv::imshow(figure_->title(), figure_->view());
+    // cv::waitKey(1);
 }
 
 void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -82,8 +117,6 @@ void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr ms
     double yaw;
     tuw::QuaternionToYaw(msg->pose.pose.orientation, yaw);
     ground_truth_ = tuw::Pose2D(msg->pose.pose.position.x, msg->pose.pose.position.y, yaw);
-    //RCLCPP_INFO(this->get_logger(), std::to_string(msg->pose.pose.position.x).data());
-
     if(goal_set){
         //auto publish_msg = goto_->goto_goal_straight(ground_truth_, pose_goal_);
         auto publish_msg = goto_->goto_goal_avoid(ground_truth_, pose_goal_, scan_);
@@ -99,6 +132,25 @@ void GoToNode::callback_goal_pose(const geometry_msgs::msg::PoseStamped::SharedP
     tuw::QuaternionToYaw(msg->pose.orientation, yaw);
     pose_goal_ = tuw::Pose2D(msg->pose.position.x, msg->pose.position.y, yaw);
     
+    if (figure_) {
+        tuw::Poses2D waypoints = goto_->pathfinder_waypoints(ground_truth_, pose_goal_, figure_);
+
+        nav_msgs::msg::Path path;
+        path.header.stamp = this->now();
+        path.header.frame_id = "nav_msgs/Path";
+
+        for (auto p : waypoints) {
+            geometry_msgs::msg::PoseStamped pose_msg;
+            pose_msg.header.frame_id = "geometry_msgs/PoseStamped"; // no idea what a frame is or what this frame_id is supposed to be
+            pose_msg.header.stamp = this->now();
+            geometry_msgs::msg::Pose pose;
+            p.copyToROSPose<geometry_msgs::msg::Pose>(pose);
+            pose_msg.pose = pose;
+            path.poses.push_back(pose_msg);
+        }
+        path_pub_->publish(path);
+    }
+
     RCLCPP_INFO(this->get_logger(), ("Goal position: x=" + std::to_string(pose_goal_.get_x()) + " y=" + std::to_string(pose_goal_.get_y())).c_str());
 }
 

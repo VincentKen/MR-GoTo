@@ -1,5 +1,8 @@
 #include "mr_goto/mr_goto.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "opencv2/opencv.hpp"
+#include <algorithm>
+#include "mr_goto/mr_goto_bfs.hpp"
 
 using namespace mr;
 using namespace tuw;
@@ -170,4 +173,105 @@ float GoTo::getRangeAtAngle(sensor_msgs::msg::LaserScan::SharedPtr scan, float a
         return scan->ranges[index];
     else
         return 0.0f; // Return 0 if index is out of range
+}
+
+std::vector<tuw::Pose2D> GoTo::pathfinder_waypoints(tuw::Pose2D start, tuw::Pose2D target, tuw::Figure* figure) {
+    pathfinder_calculate_occupancy_grid(figure);
+    tuw::Point2D s = figure->w2m(start.position());
+    tuw::Point2D t = figure->w2m(target.position());
+    s.set_x(int(s.x()));
+    s.set_y(int(s.y()));
+    t.set_x(int(t.x()));
+    t.set_y(int(t.y()));
+
+    s = pathfinder_figure_to_grid(&s, figure);
+    t = pathfinder_figure_to_grid(&t, figure);
+    std::vector<tuw::Pose2D> waypoints = mr::GoToBFS::search(tuw::Pose2D(s, start.theta()), tuw::Pose2D(t, target.theta()), &grid_);
+    std::vector<tuw::Pose2D> translated_waypoints;
+    
+    for (auto p : waypoints) {
+        tuw::Point2D np = pathfinder_grid_to_figure(&p.position(), figure);
+        np = figure->m2w(np);
+        p.set_x(np.x());
+        p.set_y(np.y());
+        translated_waypoints.emplace_back(p);
+    }
+    return translated_waypoints;
+}
+
+tuw::Point2D GoTo::pathfinder_grid_to_figure(const tuw::Point2D *p, const tuw::Figure *figure) {
+    int cols = (figure->max_x() - figure->min_x()); // these are the columns we see on the map visualization
+    int rows = (figure->max_y() - figure->min_y()); // these are the rows
+    double col_width = figure->width()/cols;
+    double row_height = figure->height()/rows;
+    int x = p->x()*col_width + col_width/2;
+    int y = p->y()*row_height + row_height/2;
+    return tuw::Point2D(x, y);
+}
+
+tuw::Point2D GoTo::pathfinder_figure_to_grid(const tuw::Point2D *p, const tuw::Figure *figure) {
+    int cols = (figure->max_x() - figure->min_x()); // these are the columns we see on the map visualization
+    int rows = (figure->max_y() - figure->min_y()); // these are the rows
+    double col_width = int(figure->width()/cols);
+    double row_height = int(figure->height()/rows);
+    int x = int(p->x()/col_width);
+    int y = int(p->y()/row_height);
+    return tuw::Point2D(x, y);
+}
+
+
+void GoTo::pathfinder_calculate_occupancy_grid(tuw::Figure *figure) {
+    int cols = (figure->max_x() - figure->min_x()); // these are the columns we see on the map visualization
+    int rows = (figure->max_y() - figure->min_y()); // these are the rows
+    // waypoints will be placed in the center of these cells
+
+    int col_width = int(figure->width()/cols);
+    int row_width = int(figure->height()/rows);
+
+    cv::resize(figure->background_image(), background_, cv::Size(figure->height(), figure->width()), cv::INTER_AREA);
+
+    cv::Mat oc = cv::Mat::zeros(cv::Size(cols, rows), CV_8UC1);
+    cv::Mat cp(cv::Size(background_.cols, background_.rows), background_.type());
+    background_.copyTo(cp);
+
+    // quick and dirty convolution
+    // if a pixel is not white, make its neighbours also not white, do this a certain amount of times
+    // for (int k = 0; k < 5; k++) {
+    //     for (int i = 1; i < background_.rows - 1; i++) {
+    //         for (int j = 1; j < background_.cols - 1; j++) {
+    //             auto v = background_.at<cv::Vec3b>(i, j);
+    //             if (v[0] != 255 && v[1] != 255 && v[2] != 255) {
+    //                 cp.at<cv::Vec3b>(i - 1, j) = cv::Vec3b(0, 0, 0);
+    //                 cp.at<cv::Vec3b>(i + 1, j) = cv::Vec3b(0, 0, 0);
+    //                 cp.at<cv::Vec3b>(i, j - 1) = cv::Vec3b(0, 0, 0);
+    //                 cp.at<cv::Vec3b>(i, j + 1) = cv::Vec3b(0, 0, 0);
+    //             }
+    //         }
+    //     }
+    //     cp.copyTo(background_);
+    // }
+
+    for (int i = 0; i < background_.rows; i++) {
+        for (int j = 0; j < background_.cols; j++) {
+            auto v = background_.at<cv::Vec3b>(i, j);
+            if (v[0] != 255 && v[1] != 255 && v[2] != 255) {
+                cv::Point p(int(j/col_width), int(i/row_width));
+                oc.at<uchar>(p) = 255;
+            }
+        }
+    }
+
+    // std::cout << "Occupancy:" << std::endl;
+    // for (int r = 0; r < rows; r++) {
+    //     for (int c = 0; c < cols; c++) {
+    //         if (oc.at<uchar>(r, c) < 100) {
+    //             std::cout << " " << int(oc.at<uchar>(r, c)) << "  ";    
+    //         } else {
+    //             std::cout << int(oc.at<uchar>(r, c)) << " ";
+    //         }
+            
+    //     }
+    //     std::cout << std::endl;
+    // }
+    grid_ = oc;
 }

@@ -72,6 +72,8 @@ EKFNode::EKFNode(rclcpp::NodeOptions options)
         std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
     pose_estimate_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("pose_estimate", 10); //publisher for pose estimate
+    sub_init_pose_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+            "/initialpose", 10, std::bind(&EKFNode::callback_init_pose, this, std::placeholders::_1)); //subscription on init_pos_
 
     this->on_timer();
 }
@@ -185,6 +187,20 @@ void EKFNode::on_timer()
     }
 }
 
+void EKFNode::callback_init_pose(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg){
+    RCLCPP_INFO(this->get_logger(), "callback_init_pose");
+
+    tuw::Pose2D init_pose;
+
+    double yaw;
+    QuaternionToYaw(msg->pose.pose.orientation, yaw);
+
+    init_pose.set(msg->pose.pose.position.x,
+                msg->pose.pose.position.y,
+                yaw);
+
+    filter_->set_init_pose(init_pose);
+}
 
 #include "rclcpp_components/register_node_macro.hpp"
 

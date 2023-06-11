@@ -4,6 +4,7 @@
 #include <mutex>
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include "nav2_msgs/srv/load_map.hpp"
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <tuw_geometry/tuw_geometry.hpp>
@@ -23,6 +24,11 @@ public:
     __attribute__((visibility("default"))) GoToNode(rclcpp::NodeOptions options);
 
 private:
+    const std::string window_name_ = "GoTo Window";
+
+    cv::Matx33d Mw2m_;             /// transformation world to map
+    cv::Matx33d Mm2w_;             /// transformation map to world
+
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::TimerBase::SharedPtr map_timer_;
 
@@ -53,7 +59,10 @@ private:
     std::shared_ptr<mr::GoTo> goto_;         /// pointer to the actual particle filter
 
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_pub_; //map publisher
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
     cv::Mat map_; //map matrix
+    tuw::Figure* figure_;
+    std::string map_loc_;
 };
 
 #endif
