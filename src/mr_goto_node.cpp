@@ -6,6 +6,11 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     // Create instance of GoTo class
     goto_ = std::make_shared<mr::GoTo>();
     
+    this->declare_parameter<std::string>("map", "line");
+    this->declare_parameter<std::string>("pos_estim", "ekf");
+    this->get_parameter("map", map_param_);
+    this->get_parameter("pos_estim", pos_estim_param_);
+
     // Init goal set state
     goal_set = false;
 
@@ -14,10 +19,17 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     //     10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
     // RCLCPP_INFO(this->get_logger(), "subscribed to ground_truth");
 
-    sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
-        "pose_estimate",
-        10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
-    RCLCPP_INFO(this->get_logger(), "subscribed to pose_estimate");
+    if(pos_estim_param_ == "ekf"){
+        sub_pose_ = create_subscription<nav_msgs::msg::Odometry>(
+            "pose_estimate",
+            10, std::bind(&GoToNode::callback_pose, this, std::placeholders::_1));
+        RCLCPP_INFO(this->get_logger(), "subscribed to pose_estimate");
+    }else{
+        sub_pose_ = create_subscription<nav_msgs::msg::Odometry>(
+            "ground_truth",
+            10, std::bind(&GoToNode::callback_pose, this, std::placeholders::_1));
+        RCLCPP_INFO(this->get_logger(), "subscribed to ground_truth");
+    }
 
     sub_goal_pose_ = create_subscription<geometry_msgs::msg::PoseStamped>(
         "goal_pose",
@@ -48,7 +60,11 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
 
     // Load the map from the PNG file here
     std::string install_loc = std::getenv("MR_DIR");
-    map_loc_ = install_loc + "/ws02/src/mr_goto/config/world/bitmaps/line.png";
+    if(map_param_ == "line"){
+        map_loc_ = install_loc + "/ws02/src/mr_goto/config/world/bitmaps/line.png";
+    }else{
+        map_loc_ = install_loc + "/ws02/src/mr_goto/config/world/bitmaps/cave.png";
+    }
     map_ = cv::imread(map_loc_, cv::IMREAD_GRAYSCALE);
     if (map_.empty()) {
         std::string message = "Failed to load map image from " + map_loc_;
@@ -112,14 +128,14 @@ void GoToNode::map_timer_callback() {
     // cv::waitKey(1);
 }
 
-void GoToNode::callback_ground_truth(const nav_msgs::msg::Odometry::SharedPtr msg)
+void GoToNode::callback_pose(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     double yaw;
     tuw::QuaternionToYaw(msg->pose.pose.orientation, yaw);
-    ground_truth_ = tuw::Pose2D(msg->pose.pose.position.x, msg->pose.pose.position.y, yaw);
+    pose_ = tuw::Pose2D(msg->pose.pose.position.x, msg->pose.pose.position.y, yaw);
     if(goal_set){
-        //auto publish_msg = goto_->goto_goal_straight(ground_truth_, pose_goal_);
-        auto publish_msg = goto_->goto_goal_avoid(ground_truth_, pose_goal_, scan_);
+        //auto publish_msg = goto_->goto_goal_straight(pose_, pose_goal_);
+        auto publish_msg = goto_->goto_goal_avoid(pose_, pose_goal_, scan_);
         //RCLCPP_INFO(this->get_logger(), std::to_string(publish_msg.angular.z).data());
         cmd_vel_pub_->publish(publish_msg);
     }
@@ -133,7 +149,7 @@ void GoToNode::callback_goal_pose(const geometry_msgs::msg::PoseStamped::SharedP
     pose_goal_ = tuw::Pose2D(msg->pose.position.x, msg->pose.position.y, yaw);
     
     if (figure_) {
-        tuw::Poses2D waypoints = goto_->pathfinder_waypoints(ground_truth_, pose_goal_, figure_);
+        tuw::Poses2D waypoints = goto_->pathfinder_waypoints(pose_, pose_goal_, figure_);
 
         nav_msgs::msg::Path path;
         path.header.stamp = this->now();

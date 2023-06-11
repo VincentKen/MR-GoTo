@@ -114,7 +114,7 @@ geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pos
     if(!obstacle_in_front && abs(orientation_error) > 0.01 && dist_to_goal > 0.01){
         // Check if we are not turning into a wall
         if(orientation_error < 0 ? (getRangeAtAngle(scan, -M_PI/2) > 0.7) : (getRangeAtAngle(scan, M_PI/2) > 0.7)){
-            twist_msg.angular.z = 2 * orientation_error;
+            twist_msg.angular.z = orientation_error;
             //std::cout << "turning to goal" << endl;
         }
         else{
@@ -128,6 +128,7 @@ geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pos
         else {
             twist_msg.linear.x= 0.0;
         }
+        turning_from_obstacle = 0;
     }
     // Facing goal or obstacle
     else{
