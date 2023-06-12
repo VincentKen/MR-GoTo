@@ -85,3 +85,18 @@ For example:
 ```bash
 ros2 launch mr_goto launch.py localization:=ekf
 ```
+
+### Launch with parameter file
+Optionally, you can start the launch file with a parameter file by executing:
+```bash
+ros2 launch mr_goto launch.py params_file:=ws02/src/mr_goto/config/params.yaml
+```
+The `params.yml` file is a relative path to your YAML configuration file.
+A sample params file would look like this:
+```yml
+goto:
+  ros__parameters:
+    map: cave
+    localization: pf
+```
+Note: As described in the previous sections, the parameters have their default values set to `map:=line` and `localization:=ekf`.

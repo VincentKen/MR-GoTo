@@ -1,3 +1,4 @@
 goto:
   ros__parameters:
-    map: "~/projects/mobile_robotics/ws02/install/mr_ekf/share/mr_ekf/config/maps/line.yml"
+    map: cave
+    localization: pf
