@@ -14,6 +14,13 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     // Init goal set state
     goal_set = false;
 
+    std::string map_file_;
+    {
+        auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+        descriptor.description = "Path to the map file";
+        map_file_ = this->declare_parameter<std::string>("map_file", "ws02/src/mr_goto/config/world/bitmaps/line.png", descriptor);
+    }
+
     // sub_ground_truth_ = create_subscription<nav_msgs::msg::Odometry>(
     //     "ground_truth",
     //     10, std::bind(&GoToNode::callback_ground_truth, this, std::placeholders::_1));
@@ -59,20 +66,10 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     path_pub_ = this->create_publisher<nav_msgs::msg::Path>("nav_msgs/Path", 10);
 
     // Load the map from the PNG file here
-    std::string install_loc = std::getenv("MR_DIR");
-    if(map_param_ == "line"){
-        map_loc_ = install_loc + "/ws02/src/mr_goto/config/world/bitmaps/line.png";
-    }else{
-        map_loc_ = install_loc + "/ws02/src/mr_goto/config/world/bitmaps/cave.png";
-    }
-    map_ = cv::imread(map_loc_, cv::IMREAD_GRAYSCALE);
+    map_ = cv::imread(map_file_, cv::IMREAD_GRAYSCALE);
     if (map_.empty()) {
-        std::string message = "Failed to load map image from " + map_loc_;
-        RCLCPP_ERROR(this->get_logger(), message.c_str());
+        RCLCPP_ERROR(this->get_logger(), "Failed to load map image");
         // Handle error...
-    } else {
-        
-        
     }
 }
 
@@ -186,5 +183,4 @@ void GoToNode::callback_laser(const sensor_msgs::msg::LaserScan::SharedPtr msg)
       laser_measurments_[i] = cv::Vec<double, 3> (x, y, 1.0);
     }
     //RCLCPP_INFO(this->get_logger(), ("Min laser scan: " + std::to_string(std::min_element(scan_->ranges.begin(), scan_->ranges.end())[0])).c_str());
-
 }
