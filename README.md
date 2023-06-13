@@ -181,4 +181,7 @@ As shown in the screenshot below, the node listens to /initialpose and /goal so 
 <img src="screenshots/3.0.0.png">
 
 ## Points distribution
-We believe that with the completed tasks we have managed to get 355 points, in addition, we have also used a branching strategy where completed tasks were first push to devel to be tested, this gives us an additional 20 points for a total of 375 points. We believe that the work balance was ditributed equally and so we want these points to be divided between us evenly.
+We believe that with the completed tasks we have managed to get 355 points, in addition, we have also used a branching strategy where completed tasks were first push to devel to be tested, this gives us an additional 20 points for a total of 375 points. We believe that the work balance was ditributed equally and so we want these points to be divided between us evenly.  
+
+The image below shows that we used a branching strategy for our git  
+<img src="screenshots/git.png">
