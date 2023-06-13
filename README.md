@@ -110,21 +110,21 @@ As can be seen from the image below. We created a new node in ROS. In the beginn
 
 ### Self localization using own implementation
 We implemented our self localization using our own method. The screenshot below shows our node printing the x coordinate of the robot.  
-[Self localization](screenshots/1.0.0.png)
+[Self localization](/screenshots/1.0.0.png)
 
 ### Set target pose using Rviz
 The target pose for our robot is set in Rviz as can be seen from the following screenshot.  
-[Target pose](screenshots/1.0.1.png)
+[Target pose](/screenshots/1.0.1.png)
 
 ### Driving towards target
 After setting the target pose, the robot drives towards the target and stops there as can bee seen from the following sequence of screenshots.  
-[Step one](screenshots/1.2.0_1.png)  
-[Step two](screenshots/1.2.0_2.png)  
-[Step three](screenshots/1.2.0_3.png)  
+[Step one](/screenshots/1.2.0_1.png)  
+[Step two](/screenshots/1.2.0_2.png)  
+[Step three](/screenshots/1.2.0_3.png)  
 
 ### Turning into correct pose at target
 Once the robot has reached the target location it will turn into the right pose as can be seen from the following screenshot.  
-[Turning](screenshots/1.2.1.png)
+[Turning](/screenshots/1.2.1.png)
 
 ### Avoiding a small obstacle
 On the way to the target the robot will avoid small obstacles.
@@ -132,20 +132,20 @@ __MISSING_SCREENSHOT__
 
 ### Navigating cave obstacle
 The following screenshots show that the robot is also capable of navigating cave obstacles.  
-[avoid1](screenshots/1.3.1_1.png)  
-[avoid2](screenshots/1.3.1_2.png)  
-[avoid3](screenshots/1.3.1_3.png)  
-[avoid4](screenshots/1.3.1_4.png)  
-[avoid5](screenshots/1.3.1_5.png)  
-[avoid6](screenshots/1.3.1_6.png)  
-[avoid7](screenshots/1.3.1_7.png)  
-[avoid8](screenshots/1.3.1_8.png)  
-[avoid9](screenshots/1.3.1_9.png)  
-[avoid10](screenshots/1.3.1_10.png)  
+[avoid1](/screenshots/1.3.1_1.png)  
+[avoid2](/screenshots/1.3.1_2.png)  
+[avoid3](/screenshots/1.3.1_3.png)  
+[avoid4](/screenshots/1.3.1_4.png)  
+[avoid5](/screenshots/1.3.1_5.png)  
+[avoid6](/screenshots/1.3.1_6.png)  
+[avoid7](/screenshots/1.3.1_7.png)  
+[avoid8](/screenshots/1.3.1_8.png)  
+[avoid9](/screenshots/1.3.1_9.png)  
+[avoid10](/screenshots/1.3.1_10.png)  
 
 ### Plan waypoints and publish them
 The node will once a target pose has been set calculate a path to the target goal through breadth-first search. Once the path has been calculated it will publish the waypoints to ROS nav_msgs/Path. The screenshot below shows the waypoints being published and it also gives a visualization of the proposed path.  
-[path](screenshots/1.4.0.png)
+[path](/screenshots/1.4.0.png)
 
 ### Publish used map to RViz
 __MISSING DOCUMENTATION__
@@ -155,7 +155,7 @@ __MISSING DOCUMENTATION__
 
 ### Initialize self-location and trigger driving using RViz
 As shown in the screenshot below, the node listens to /initialpose and /goal so it can be initialized and the driving can be triggered through RViz.
-[rviz](screenshots/3.0.0.png)
+[rviz](/screenshots/3.0.0.png)
 
 ## Points distribution
 We believe that with the completed tasks we have managed to get 355 points, in addition, we have also used a branching strategy where completed tasks were first push to devel to be tested, this gives us an additional 20 points for a total of 375 points. We believe that the work balance was ditributed equally and so we want these points to be divided between us evenly.
