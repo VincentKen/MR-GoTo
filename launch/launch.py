@@ -24,6 +24,7 @@ def generate_launch_description():
         DeclareLaunchArgument(params_file_arg_name, default_value='', description='The params file used for storing params'),
         generate_params_file_configuration(),
         generate_stage(),
+        generate_rviz(),
         generate_laserscan_features(),
         generate_pf(),
         generate_ekf(),
@@ -77,6 +78,13 @@ def generate_stage():
             }]
         )
     ])
+
+
+def generate_rviz():
+    return Node(
+        package='rviz2',
+        executable='rviz2'
+    )
 
 
 def generate_laserscan_features():
