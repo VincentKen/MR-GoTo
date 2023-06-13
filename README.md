@@ -118,10 +118,10 @@ Note: As described in the previous sections, the parameters have their default v
 - Benjamin Gallauner
 
 - Julius Salamon
-    -published Map(45points)
-    -Initialize self-localization and trigger driving using RViz (50 Points)
-    -Added parameters to node 
-    -Adjusted EKF and PF to publish the pose and get the init pose
+    - published Map(45points)
+    - Initialize self-localization and trigger driving using RViz (50 Points)
+    - Added parameters to node 
+    - Adjusted EKF and PF to publish the pose and get the init pose
 
 - Vincent Kenbeek
     - Create a new node (50 points)
