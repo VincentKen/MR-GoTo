@@ -47,9 +47,13 @@ We can also choose the map file we want `mr_goto` to run with.
 ```bash
 ros2 run mr_goto mr_goto --ros-args -p map_file:=<path_to_map>
 ```
+or with the launch file:
+```bash
+ros2 launch mr_goto launch.py map:=<name_of_map>
+```
 For example:
 ```bash
-ros2 launch mr_goto launch.py map:=ws02/src/mr_goto/config/world/bitmaps/cave.png
+ros2 launch mr_goto launch.py map:=cave
 ```
 Note: Per default, we are using the `line` map.
 

@@ -163,27 +163,14 @@ def generate_ekf():
 
 
 def generate_goto():
-    package = 'mr_goto'
-    directory = get_package_share_directory(package)
-
-    map_file_launch_arg_name = 'goto_map_file'
-
-    def goto_configuration(context):
-        map_path = os.path.join(directory, "config/world/bitmaps", context.launch_configurations[map_arg_name])
-        context.launch_configurations[map_file_launch_arg_name] = map_path + '.png'
-
-    goto_configuration_arg = OpaqueFunction(function=goto_configuration)
-
-    return GroupAction([
-        goto_configuration_arg,
-        Node(
-            package=package,
-            executable='mr_goto',
-            name='goto',
-            parameters=[
-                {
-                    'map_file': LaunchConfiguration(map_file_launch_arg_name)
-                }
-            ]
-        )
-    ])
+    return Node(
+        package='mr_goto',
+        executable='mr_goto',
+        name='goto',
+        parameters=[
+            {
+                'map': LaunchConfiguration(map_arg_name),
+                'localization': LaunchConfiguration(localization_arg_name)
+            }
+        ]
+    )
