@@ -1,4 +1,4 @@
 goto:
   ros__parameters:
     map: cave
-    localization: ekf
+    localization: pf
