@@ -108,7 +108,7 @@ Note: As described in the previous sections, the parameters have their default v
 ## Members
 - Thomas Khlebovitch (01427030)
 - Benjamin Gallauner
-- Julius Salamon
+- Julius Salamon (51824212)
 - Vincent Kenbeek (12229949)
 
 ## Tasked Completed
@@ -118,6 +118,10 @@ Note: As described in the previous sections, the parameters have their default v
 - Benjamin Gallauner
 
 - Julius Salamon
+    -published Map(45points)
+    -Initialize self-localization and trigger driving using RViz (50 Points)
+    -Added parameters to node 
+    -Adjusted EKF and PF to publish the pose and get the init pose
 
 - Vincent Kenbeek
     - Create a new node (50 points)
@@ -167,7 +171,7 @@ The node will once a target pose has been set calculate a path to the target goa
 <img src="screenshots/1.4.0.png">
 
 ### Publish used map to RViz
-__MISSING DOCUMENTATION__
+<img src="screenshots/3.0.0.png">
 
 ### Basic launch file
 __MISSING DOCUMENTATION__
