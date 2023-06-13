@@ -14,12 +14,13 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
     // Init goal set state
     goal_set = false;
 
-    if (pos_estim_param_ == "ekf") {
+    if ((pos_estim_param_ == "ekf") || (pos_estim_param_ == "pf")) {
         sub_pose_ = create_subscription<nav_msgs::msg::Odometry>(
             "pose_estimate",
             10, std::bind(&GoToNode::callback_pose, this, std::placeholders::_1));
         RCLCPP_INFO(this->get_logger(), "subscribed to pose_estimate");
-    } else {
+    } else
+    {
         sub_pose_ = create_subscription<nav_msgs::msg::Odometry>(
             "ground_truth",
             10, std::bind(&GoToNode::callback_pose, this, std::placeholders::_1));
