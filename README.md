@@ -85,3 +85,56 @@ For example:
 ```bash
 ros2 launch mr_goto launch.py localization:=ekf
 ```
+
+# Documentation
+## Members
+- Thomas Khlebovitch
+- Benjamin Gallauner
+- Julius Salamon
+- Vincent Kenbeek (12229949)
+
+## Tasked Completed
+- Thomas Khlebovitch
+
+- Benjamin Gallauner
+
+- Julius Salamon
+
+- Vincent Kenbeek
+    - Create a new node (50 points)
+    - Plan waypoints to target pose and publish them (50 points)
+
+### Create a new node
+As can be seen from the image below. We created a new node in ROS. In the beginning this node only had a simple timer callback but was later extended to incorporate the other completed tasks as well.  
+[Node creation screenshot](screenshots/node_creation.png)
+
+### Self localization using own implementation
+We implemented our self localization using our own method. The screenshot below shows our node printing the x coordinate of the robot.  
+[Self localization](screenshots/1.0.0.png)
+
+### Set target pose using Rviz
+The target pose for our robot is set in Rviz as can be seen from the following screenshot.  
+[Target pose](screenshots/1.0.1.png)
+
+### Driving towards target
+After setting the target pose, the robot drives towards the target and stops there as can bee seen from the following sequence of screenshots.  
+[Step one](screenshots/1.2.0_1.png)  
+[Step two](screenshots/1.2.0_2.png)  
+[Step three](screenshots/1.2.0_3.png)  
+
+### Turning into correct pose at target
+Once the robot has reached the target location it will turn into the right pose as can be seen from the following screenshot.  
+[Turning](screenshots/1.2.1.png)
+
+### Avoiding a small obstacle
+On the way to the target the robot will avoid small obstacles.  
+[avoid1](screenshots/1.3.1_1.png)  
+[avoid2](screenshots/1.3.1_2.png)  
+[avoid3](screenshots/1.3.1_3.png)  
+[avoid4](screenshots/1.3.1_4.png)  
+[avoid5](screenshots/1.3.1_5.png)  
+[avoid6](screenshots/1.3.1_6.png)  
+[avoid7](screenshots/1.3.1_7.png)  
+[avoid8](screenshots/1.3.1_8.png)  
+[avoid9](screenshots/1.3.1_9.png)  
+[avoid10](screenshots/1.3.1_10.png)  
