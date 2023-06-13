@@ -13,7 +13,7 @@ GoToNode::GoToNode(rclcpp::NodeOptions options) : Node("goto", options) {
 
     // Init goal set state
     goal_set = false;
-
+    pose_set = false;
     if ((pos_estim_param_ == "ekf") || (pos_estim_param_ == "pf")) {
         sub_pose_ = create_subscription<nav_msgs::msg::Odometry>(
             "pose_estimate",
@@ -118,6 +118,7 @@ void GoToNode::callback_pose(const nav_msgs::msg::Odometry::SharedPtr msg) {
     double yaw;
     tuw::QuaternionToYaw(msg->pose.pose.orientation, yaw);
     pose_ = tuw::Pose2D(msg->pose.pose.position.x, msg->pose.pose.position.y, yaw);
+    pose_set = true;
     if (goal_set) {
         auto publish_msg = goto_->goto_goal_avoid(pose_, pose_goal_, scan_);
         cmd_vel_pub_->publish(publish_msg);
@@ -130,7 +131,9 @@ void GoToNode::callback_goal_pose(const geometry_msgs::msg::PoseStamped::SharedP
     tuw::QuaternionToYaw(msg->pose.orientation, yaw);
     pose_goal_ = tuw::Pose2D(msg->pose.position.x, msg->pose.position.y, yaw);
 
-    if (figure_) {
+    RCLCPP_INFO(this->get_logger(), ("Goal position: x=" + std::to_string(pose_goal_.get_x()) + " y=" + std::to_string(pose_goal_.get_y())).c_str());
+
+    if (pose_set && figure_) {
         tuw::Poses2D waypoints = goto_->pathfinder_waypoints(pose_, pose_goal_, figure_);
 
         nav_msgs::msg::Path path;
@@ -149,7 +152,6 @@ void GoToNode::callback_goal_pose(const geometry_msgs::msg::PoseStamped::SharedP
         path_pub_->publish(path);
     }
 
-    RCLCPP_INFO(this->get_logger(), ("Goal position: x=" + std::to_string(pose_goal_.get_x()) + " y=" + std::to_string(pose_goal_.get_y())).c_str());
 }
 
 void GoToNode::callback_laser(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
