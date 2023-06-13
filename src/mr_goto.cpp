@@ -53,7 +53,7 @@ geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pos
     static auto twist_msg = geometry_msgs::msg::Twist();
     static int turning_from_obstacle = 0;
 
-    double max_speed = 0.8;
+    double max_speed = 0.6;
     double unsafe_dist_val = 0.6;
 
     // Calculate orientation to face to goal
@@ -111,7 +111,7 @@ geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pos
     // Drive towards the goal 
     // If we are very close to goal orientation_error is not numerically stable -> exclude this case
     // Only if there is no obstacle in front
-    if(!obstacle_in_front && abs(orientation_error) > 0.01 && dist_to_goal > 0.1){
+    if(!obstacle_in_front && abs(orientation_error) > 0.1 && dist_to_goal > 0.2){
         // Check if we are not turning into a wall
         if(orientation_error < 0 ? (getRangeAtAngle(scan, -M_PI/2) > 0.7) : (getRangeAtAngle(scan, M_PI/2) > 0.7)){
             twist_msg.angular.z = orientation_error;
@@ -156,8 +156,8 @@ geometry_msgs::msg::Twist GoTo::goto_goal_avoid(tuw::Pose2D pose_robot, tuw::Pos
         else{
             double final_orientation_error = angle_difference(pose_goal.theta(), pose_robot.theta());
             // Don't wiggle couse of ekf or pf noise in the end
-            if(abs(final_orientation_error) > M_PI/40.0){
-                twist_msg.angular.z = 2 * final_orientation_error;
+            if(abs(final_orientation_error) > 0.1){     // 5.7 ° error allowed
+                twist_msg.angular.z = min(2 * final_orientation_error, 0.3);
             }
             else {
                 twist_msg.angular.z = 0.0;
