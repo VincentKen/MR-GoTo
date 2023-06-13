@@ -47,9 +47,13 @@ We can also choose the map file we want `mr_goto` to run with.
 ```bash
 ros2 run mr_goto mr_goto --ros-args -p map_file:=<path_to_map>
 ```
+or with the launch file:
+```bash
+ros2 launch mr_goto launch.py map:=<name_of_map>
+```
 For example:
 ```bash
-ros2 launch mr_goto launch.py map:=ws02/src/mr_goto/config/world/bitmaps/cave.png
+ros2 launch mr_goto launch.py map:=cave
 ```
 Note: Per default, we are using the `line` map.
 
@@ -86,15 +90,30 @@ For example:
 ros2 launch mr_goto launch.py localization:=ekf
 ```
 
+### Launch with parameter file
+Optionally, you can start the launch file with a parameter file by executing:
+```bash
+ros2 launch mr_goto launch.py params_file:=ws02/src/mr_goto/config/params.yaml
+```
+The `params.yml` file is a relative path to your YAML configuration file.
+A sample params file would look like this:
+```yml
+goto:
+  ros__parameters:
+    map: cave
+    localization: pf
+```
+Note: As described in the previous sections, the parameters have their default values set to `map:=line` and `localization:=ekf`.
 # Documentation
 ## Members
-- Thomas Khlebovitch
+- Thomas Khlebovitch (01427030)
 - Benjamin Gallauner
 - Julius Salamon
 - Vincent Kenbeek (12229949)
 
 ## Tasked Completed
 - Thomas Khlebovitch
+    - Create launch files (80 points)
 
 - Benjamin Gallauner
 
